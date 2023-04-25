@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { Box, Button, Typography } from "@mui/material";
 //import pinyin from  "chinese-to-pinyin"
 var pinyin = require("chinese-to-pinyin")
-var hanzi = require("hanzi");
-hanzi.start();
+// var hanzi = require("hanzi");
+// hanzi.start();
 
 const Popup = () => {
   const [image, setImage] = useState<File | undefined>();
@@ -14,9 +14,13 @@ const Popup = () => {
 
   useEffect(() => {
     chrome.storage.local.get(['target'], function(res) {
-      let words = hanzi.segment(res.target) as string[]
+      let words = res.target as string[]
       let pinyinWord = words.map((word) => <ruby>{word}<rt>{pinyin(word)}</rt></ruby>)
       setRes(<div style={{fontSize: 24}}>{pinyinWord}</div>)
+      const uttr = new SpeechSynthesisUtterance(words.join(""))
+      uttr.lang='zh-CN'
+  // 発言を再生 (発言キューに発言を追加)
+      speechSynthesis.speak(uttr)
     });
     // document.addEventListener("click", () => {
     //   chrome.storage.local.get(['target'], function(res) {
