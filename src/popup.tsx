@@ -18,8 +18,7 @@ const Popup = () => {
 
   const displayWords = (words: string[]) => {
     let pinyinWord = words.map((word) => <ruby>{word}<rt data-rt={pinyin(word)} ></rt></ruby>)
-    setRes(<div style={{fontSize: 24}}>AA:{pinyinWord}{window.speechSynthesis.getVoices().length}</div>)
-    //TODO CLEAR SOUND https://stackoverflow.com/questions/15653145/using-google-text-to-speech-in-javascript
+    setRes(<div style={{fontSize: 24}}>{pinyinWord}</div>)
     const uttr = new SpeechSynthesisUtterance(words.join(""))
     uttr.lang='zh-CN'
     //uttr.voice = window.speechSynthesis.getVoices().filter(voice => voice.voiceURI.length == "Google 普通话（中国大陆）".length)[0]
@@ -30,7 +29,7 @@ const Popup = () => {
   const doTranslate = async (target: string) => {
      let eng = await axios({
         method: "post",
-        url: `http://localhost:8080/translate`,
+        url: `${process.env.REACT_APP_API_URL}/translate`,
         data: {Text: target, LangTo: "en"},
       });
       if (eng.status === 204){
@@ -81,7 +80,7 @@ const Popup = () => {
 
     let res_ = await axios({
       method: "post",
-      url: `http://localhost:8080/ocr`,
+      url: `${process.env.REACT_APP_API_URL}/ocr`,
       data: formData,
       headers: { "Content-Type": "multipart/form-data" },
     });

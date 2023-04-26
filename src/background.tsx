@@ -34,7 +34,7 @@ document.addEventListener("mouseup", async () => {
   //let words = hanzi.segment(res) as string[]
   let words = await axios({
       method: "post",
-      url: `http://localhost:8080/segmentation`,
+      url: `${process.env.REACT_APP_API_URL}/segmentation`,
       data: {"Text": res},
     });
     if (words.status === 204){
