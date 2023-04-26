@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 import axios, { Axios } from "axios";
 import { useForm } from "react-hook-form";
@@ -11,27 +11,57 @@ var pinyin = require("chinese-to-pinyin")
 const Popup = () => {
   const [image, setImage] = useState<File | undefined>();
   const [res, setRes] = useState<JSX.Element>(<div></div>);
+  const [translate, setTranslate] = useState("");
+  const firstCall = useRef(true);
+
+
+
+  const displayWords = (words: string[]) => {
+    let pinyinWord = words.map((word) => <ruby>{word}<rt data-rt={pinyin(word)} ></rt></ruby>)
+    setRes(<div style={{fontSize: 24}}>AA:{pinyinWord}{window.speechSynthesis.getVoices().length}</div>)
+    //TODO CLEAR SOUND https://stackoverflow.com/questions/15653145/using-google-text-to-speech-in-javascript
+    const uttr = new SpeechSynthesisUtterance(words.join(""))
+    uttr.lang='zh-CN'
+    //uttr.voice = window.speechSynthesis.getVoices().filter(voice => voice.voiceURI.length == "Google 普通话（中国大陆）".length)[0]
+// 発言を再生 (発言キューに発言を追加)
+    speechSynthesis.speak(uttr)
+  }
+
+  const doTranslate = async (target: string) => {
+     let eng = await axios({
+        method: "post",
+        url: `http://localhost:8080/translate`,
+        data: {Text: target, LangTo: "en"},
+      });
+      if (eng.status === 204){
+        setTranslate("ERR")
+      }else{
+        setTranslate(eng.data)
+        const uttr = new SpeechSynthesisUtterance(target)
+        uttr.lang='zh-CN'
+    // 発言を再生 (発言キューに発言を追加)
+        speechSynthesis.speak(uttr)
+      }
+    return 
+  }
 
   useEffect(() => {
+    if(!firstCall.current)return;
+    firstCall.current = false;
+    window.speechSynthesis.getVoices();
+    
     chrome.storage.local.get(['target'], function(res) {
-      let words = res.target as string[]
-      let pinyinWord = words.map((word) => <ruby>{word}<rt>{pinyin(word)}</rt></ruby>)
-      setRes(<div style={{fontSize: 24}}>{pinyinWord}</div>)
-      const uttr = new SpeechSynthesisUtterance(words.join(""))
-      uttr.lang='zh-CN'
-  // 発言を再生 (発言キューに発言を追加)
-      speechSynthesis.speak(uttr)
+      displayWords(res.target as string[])
     });
-    // document.addEventListener("click", () => {
-    //   chrome.storage.local.get(['target'], function(res) {
-    //     setRes(<div style={{fontSize: 24}}>LOAD"{res.target}"</div>) 
-    //   });
-    // });
+    document.addEventListener("mouseup", () => {
+      doTranslate(window.getSelection()!.toString())
+    });
     // document.addEventListener("selectionchange", () => {
     //   chrome.storage.local.get(['target'], function(res) {
     //     setRes(<div style={{fontSize: 24}}>LOAD"{res.target}"</div>) 
     //   });
     // });
+      window.addEventListener("paste", (e: any) => e && e.clipboardData ? uploadFile(e.clipboardData.files[0]): null);
   }, []);
 
 
@@ -56,12 +86,11 @@ const Popup = () => {
       headers: { "Content-Type": "multipart/form-data" },
     });
     
+
     if (res_.status === 204){
-      setRes(<Typography>res_.statusText</Typography>)
+      setRes(<Typography>{res_.statusText}</Typography>)
     }else{
-      let words = res_.data as string[]
-      let pinyinWord = words.map((word) => <ruby>{word}<rt>{pinyin(word)}</rt></ruby>)
-      setRes(<div style={{fontSize: 24}}>{pinyinWord}</div>)
+      displayWords(res_.data)
       
       // let pinyin_ = await axios({
       //   method: "post",
@@ -99,6 +128,7 @@ const Popup = () => {
       </form>
       
      {res}
+     <Typography>{translate}</Typography>
     </Box>
   );
 };

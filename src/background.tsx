@@ -4,25 +4,43 @@
 //   console.log(res)
 //   localStorage.setItem('target', res);
 // });
-var hanzi: any;
-chrome.storage.local.get(['hanzi'], function(res) {
-  if(res.target){
-    hanzi = res.target;
+
+import axios from "axios";
+
+//var hanzi = require("hanzi");
+// var hanzi: any;
+// chrome.storage.local.get(['hanzi'], function(res) {
+//   if(res.target){
+//     hanzi = res.target;
     
-  }else{
-    hanzi = require("hanzi");
-    chrome.storage.local.set({ hanzi: hanzi }, () => console.log("hanzi"))
-    hanzi.start();
-  }
-});
+//   }else{
+//     hanzi = require("hanzi");
+//     chrome.storage.local.set({ hanzi: hanzi }, () => console.log("hanzi"))
+//     hanzi.start();
+//   }
+// });
 
 
 
-document.addEventListener("selectionchange", () => {
+document.addEventListener("mouseup", async () => {
   let res = window.getSelection()!.toString()
-  let words = hanzi.segment(res) as string[]
+  console.log(res)
+  //var voices = window.speechSynthesis.getVoices();
+  //console.log(voices.map(voice => voice.name))
 
-  console.log(words)
-  //localStorage.setItem('TTR', res);
-  chrome.storage.local.set({ target: words }, () => console.log("saved"))
+  if (!res){
+    return 
+  }
+  //let words = hanzi.segment(res) as string[]
+  let words = await axios({
+      method: "post",
+      url: `http://localhost:8080/segmentation`,
+      data: {"Text": res},
+    });
+    if (words.status === 204){
+      chrome.storage.local.set({ target: ["ERR"] }, () => console.log("saved"))
+    }else{
+      console.log(words.data)
+      chrome.storage.local.set({ target: words.data }, () => console.log("saved"))
+    }
 });
