@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import axios, { Axios } from "axios";
 import { useForm } from "react-hook-form";
 import { Box, Button, Typography } from "@mui/material";
+import { API_URL } from "./env";
 //import pinyin from  "chinese-to-pinyin"
 var pinyin = require("chinese-to-pinyin")
 // var hanzi = require("hanzi");
@@ -21,7 +22,9 @@ const Popup = () => {
     setRes(<div style={{fontSize: 24}}>{pinyinWord}</div>)
     const uttr = new SpeechSynthesisUtterance(words.join(""))
     uttr.lang='zh-CN'
-    //uttr.voice = window.speechSynthesis.getVoices().filter(voice => voice.voiceURI.length == "Google 普通话（中国大陆）".length)[0]
+    uttr.voice = window.speechSynthesis.getVoices().filter(voice => voice.voiceURI.length == "Google 普通话（中国大陆）".length)[0]
+    uttr.rate = 0.8;
+
 // 発言を再生 (発言キューに発言を追加)
     speechSynthesis.speak(uttr)
   }
@@ -29,7 +32,7 @@ const Popup = () => {
   const doTranslate = async (target: string) => {
      let eng = await axios({
         method: "post",
-        url: `${process.env.REACT_APP_API_URL}/translate`,
+        url: `${API_URL}/translate`,
         data: {Text: target, LangTo: "en"},
       });
       if (eng.status === 204){
@@ -38,7 +41,10 @@ const Popup = () => {
         setTranslate(eng.data)
         const uttr = new SpeechSynthesisUtterance(target)
         uttr.lang='zh-CN'
+        uttr.voice = window.speechSynthesis.getVoices().filter(voice => voice.voiceURI.length == "Google 普通话（中国大陆）".length)[0]
     // 発言を再生 (発言キューに発言を追加)
+        uttr.rate = 0.8;
+
         speechSynthesis.speak(uttr)
       }
     return 
@@ -55,11 +61,6 @@ const Popup = () => {
     document.addEventListener("mouseup", () => {
       doTranslate(window.getSelection()!.toString())
     });
-    // document.addEventListener("selectionchange", () => {
-    //   chrome.storage.local.get(['target'], function(res) {
-    //     setRes(<div style={{fontSize: 24}}>LOAD"{res.target}"</div>) 
-    //   });
-    // });
       window.addEventListener("paste", (e: any) => e && e.clipboardData ? uploadFile(e.clipboardData.files[0]): null);
   }, []);
 
@@ -80,7 +81,7 @@ const Popup = () => {
 
     let res_ = await axios({
       method: "post",
-      url: `${process.env.REACT_APP_API_URL}/ocr`,
+      url: `${API_URL}/ocr`,
       data: formData,
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -90,18 +91,6 @@ const Popup = () => {
       setRes(<Typography>{res_.statusText}</Typography>)
     }else{
       displayWords(res_.data)
-      
-      // let pinyin_ = await axios({
-      //   method: "post",
-      //   url: `http://localhost:8080/gpt`,
-      //   data: {"Text": res_.data},
-      // });
-      // if (pinyin_.status === 204){
-      //   setRes(<Typography>pinyin_.statusText</Typography>)
-      // }else{
-        
-      //   setRes(<div dangerouslySetInnerHTML={{__html: pinyin_.data}} style={{fontSize: "24px"}}></div>)
-      // }
     }
 
     

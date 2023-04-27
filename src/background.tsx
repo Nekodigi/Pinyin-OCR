@@ -6,6 +6,7 @@
 // });
 
 import axios from "axios";
+import { API_URL } from "./env";
 
 //var hanzi = require("hanzi");
 // var hanzi: any;
@@ -34,7 +35,7 @@ document.addEventListener("mouseup", async () => {
   //let words = hanzi.segment(res) as string[]
   let words = await axios({
       method: "post",
-      url: `${process.env.REACT_APP_API_URL}/segmentation`,
+      url: `${API_URL}/segmentation`,
       data: {"Text": res},
     });
     if (words.status === 204){
