@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import axios, { Axios } from "axios";
 import { useForm } from "react-hook-form";
 import { Box, Button, Typography } from "@mui/material";
+import { API_URL } from "./env";
 //import pinyin from  "chinese-to-pinyin"
 var pinyin = require("chinese-to-pinyin")
 // var hanzi = require("hanzi");
@@ -29,7 +30,7 @@ const Popup = () => {
   const doTranslate = async (target: string) => {
      let eng = await axios({
         method: "post",
-        url: `${process.env.REACT_APP_API_URL}/translate`,
+        url: `${API_URL}/translate`,
         data: {Text: target, LangTo: "en"},
       });
       if (eng.status === 204){
@@ -80,7 +81,7 @@ const Popup = () => {
 
     let res_ = await axios({
       method: "post",
-      url: `${process.env.REACT_APP_API_URL}/ocr`,
+      url: `${API_URL}/ocr`,
       data: formData,
       headers: { "Content-Type": "multipart/form-data" },
     });
