@@ -1,46 +1,73 @@
-# Getting Started with Create React App
+# pinyin-ocr-frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+- [Demo](#demo)
+- [Feature](#feature)
+- [TODO](#todo)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Install](#install)
+- [Source Code](#source-code)
 
-## Available Scripts
+## **Demo**
 
-In the project directory, you can run:
 
-### `npm start`
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/ynAHunbV380/0.jpg)](http://www.youtube.com/watch?v=ynAHunbV380 "Video Title")
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## **Feature**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Read Chinese characters from images
+- Read selected text in the browser
+- Display Chinese pinyin
+- Display translation of Chinese characters
+- Translate to Chinese if other languages are detected
+- Read selected Chinese characters aloud
 
-### `npm test`
+## **TODO**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Improve design
+- Post to Chrome Extension
+- Paste character data
+- Select target language for translation
+- Select speech synthesis voice
+- Disable speech synthesis
 
-### `npm run build`
+## **Setup**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. Prepare GCP (Backend)  
+Translate API and Vision AI are required to run. Also, it is recommended to deploy to Cloud Run. Please refer to the boilerplate and input the information in dev.env.  
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Register the extension (Frontend)  
+Create src/env.ts and input the URL of the deployed backend. Update the dist folder with **`yarn watch`**. Enable Developer mode in Chrome, and then load the dist folder from Load unpacked.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## **Usage**
 
-### `npm run eject`
+1. Read Chinese characters from images  
+Take a screenshot and copy it. Click the extension and open the popup, then paste it with ctrl+v or upload the image with the UPLOAD button. After a few seconds, the Chinese characters will be displayed.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+1. Read selected text on websites  
+When you open the popup with selected text on the screen, the selected text will be displayed.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Translate Chinese to English  
+When you select Chinese, the translation of the selected text will be displayed.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+1. Translate other languages to Chinese  
+In the same way, when you select text in other languages and open the popup, it will be displayed in Chinese.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+1. Read Chinese aloud  
+It will be played back both when the popup is opened and when Chinese is selected in the popup.
 
-## Learn More
+## **Install**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Enable Developer mode and load the dist folder from Load unpacked.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**[https://github.com/Nekodigi/pinyin-ocr-frontend](https://github.com/Nekodigi/pinyin-ocr-frontend)**
+
+## **Source Code**
+
+- Backend
+
+**[https://github.com/Nekodigi/pinyin-ocr-backend](https://github.com/Nekodigi/pinyin-ocr-backend)**
+
+- Frontend
+
+**[https://github.com/Nekodigi/pinyin-ocr-frontend](https://github.com/Nekodigi/pinyin-ocr-frontend)**
