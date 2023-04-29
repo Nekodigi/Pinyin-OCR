@@ -91,6 +91,7 @@ const Popup = () => {
       setRes(<Typography>{res_.statusText}</Typography>)
     }else{
       displayWords(res_.data)
+      chrome.storage.local.set({ target: res_.data }, () => console.log("saved"))
     }
 
     
