@@ -7,9 +7,14 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom/client";
 import axios, { Axios, isAxiosError } from "axios";
-import { useForm } from "react-hook-form";
-import { Alert, Box, Button, Typography } from "@mui/material";
-import { API_URL } from "./env";
+import { set, useForm } from "react-hook-form";
+import { Alert, Box, Button, Stack, Typography } from "@mui/material";
+import {
+  API_URL,
+  SERVICE_FRAMEWORK_BE_URL,
+  SERVICE_FRAMEWORK_URL,
+  SERVICE_ID,
+} from "./env";
 var pinyin = require("chinese-to-pinyin");
 import FingerPrintJS from "@fingerprintjs/fingerprintjs";
 import { status } from "./consts/status";
@@ -18,49 +23,50 @@ const Popup = () => {
   const [res, setRes] = useState<JSX.Element>(<div></div>);
   const [translate, setTranslate] = useState("");
   const firstCall = useRef(true);
-  const fp = useRef("AAAA");
   const [error, setError] = useState("");
   const [errorUrl, setErrorUrl] = useState("");
+  const [browserId, setBrowserId] = useState("");
+  const [userId, setUserId] = useState("");
+  const [redirectId, setRedirectId] = useState("");
 
-  const initFp = () => {
-    return new Promise((resolve: (value: string) => void) => {
-      chrome.storage.local.get(["fp"], async (res) => {
-        if (res.fp) {
-          fp.current = res.fp;
-          resolve(res.fp);
-        } else {
-          const fp_ = await newFp();
-          fp.current = fp_;
-          resolve(fp_);
-        }
+  useEffect(() => {
+    chrome.storage.local.get(["browserId"], async (res) => {
+      let id;
+      if (!res.browserId) {
+        let res = await axios({
+          method: "get",
+          url: `${SERVICE_FRAMEWORK_BE_URL}/user/unique_id`,
+        });
+        id = res.data.id;
+
+        chrome.storage.local.set({ browserId: id });
+      } else {
+        id = res.browserId;
+      }
+      let redirectRes = await axios({
+        method: "get",
+        url: `${SERVICE_FRAMEWORK_BE_URL}/redirect/${SERVICE_ID}/${id}`,
       });
-      const newFp = async () => {
-        const fp = await FingerPrintJS.load();
-        const result = await fp.get();
-        chrome.storage.local.set({ fp: result.visitorId }, () =>
-          console.log("saved")
-        );
-        return result.visitorId;
-      };
+      let redirectedUser = redirectRes.data.id;
+      setRedirectId(redirectedUser);
+      setUserId(redirectedUser ? redirectedUser : id);
+      setBrowserId(id);
     });
-  };
+  }, []);
 
-  const getSubscribeUrl = async () => {
-    const res = await axios({
-      method: "post",
-      url: `${API_URL}/subscribe`,
-      data: { UserId: fp.current },
-    });
-    return res.data;
-  };
+  const dashBoardUrl = useMemo(
+    () => `${SERVICE_FRAMEWORK_URL}/${SERVICE_ID}?link_target=${browserId}`,
+    [browserId]
+  );
 
-  const displayWord = async (word: string) => {
+  const displayWord = async (userId: string, word: string) => {
     if (!word) return;
     try {
+      console.log(userId, word);
       let words = await axios({
         method: "post",
         url: `${API_URL}/segmentation`,
-        data: { UserId: fp.current, Text: word },
+        data: { UserId: userId, Text: word },
       });
       displayWords(words.data);
     } catch (e) {
@@ -69,11 +75,11 @@ const Popup = () => {
         switch (e.response?.data.status) {
           case status.GLOBAL_QUOTA_NOT_ENOUGH:
             setError("Too many free user. Please subscribe.");
-            setErrorUrl(await getSubscribeUrl());
+            setErrorUrl(dashBoardUrl);
             break;
           case status.QUOTA_NOT_ENOUGH:
             setError("You used all your quota. Please subscribe.");
-            setErrorUrl(await getSubscribeUrl());
+            setErrorUrl(dashBoardUrl);
             break;
           default:
             setError("Something went wrong. Please try again later.");
@@ -108,7 +114,7 @@ const Popup = () => {
     let eng = await axios({
       method: "post",
       url: `${API_URL}/translate`,
-      data: { UserId: fp.current, Text: target, LangTo: "en" },
+      data: { UserId: userId, Text: target, LangTo: "en" },
     });
     if (eng.status === 204) {
       setTranslate("ERR");
@@ -130,16 +136,17 @@ const Popup = () => {
   };
 
   useEffect(() => {
+    if (!userId) return;
     if (!firstCall.current) return;
+
     firstCall.current = false;
     const f = async () => {
-      await initFp();
       window.speechSynthesis.getVoices();
       // chrome.storage.local.get(["target"], function (res) {
       //   displayWords(res.target as string[]);
       // });
-      chrome.storage.local.get(["target"], function (res) {
-        displayWord(res.target);
+      chrome.storage.local.get(["target"], (res) => {
+        displayWord(userId, res.target);
       });
 
       document.addEventListener("mouseup", () => {
@@ -150,22 +157,19 @@ const Popup = () => {
       );
     };
     f();
-  }, []);
+  }, [userId]);
 
-  const uploadImage = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files === null || e.target.files.length === 0) return;
-      uploadFile(e.target.files[0]);
-      e.target.files = null;
-    },
-    [fp]
-  );
+  const uploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files === null || e.target.files.length === 0) return;
+    uploadFile(e.target.files[0]);
+    e.target.files = null;
+  };
 
   const uploadFile = async (img?: File) => {
     const formData = new FormData();
     if (!img) return;
     formData.append("image", img);
-    formData.append("user_id", fp.current);
+    formData.append("user_id", userId);
 
     let res_ = await axios({
       method: "post",
@@ -187,18 +191,6 @@ const Popup = () => {
   return (
     <Box width="480px">
       <Typography>Pinyin OCR</Typography>
-      <form action="/upload" method="POST">
-        <Button aria-label="upload" component="label" variant="contained">
-          UPLOAD
-          <input
-            type="file"
-            hidden
-            id="upload"
-            name="upload"
-            onChange={(e) => uploadImage(e)}
-          />
-        </Button>
-      </form>
 
       {res}
       <Typography>{translate}</Typography>
@@ -214,6 +206,27 @@ const Popup = () => {
           {error}
         </Alert>
       ) : null}
+      <Stack direction="row" justifyContent={"space-between"}>
+        <form action="/upload" method="POST">
+          <Button aria-label="upload" component="label">
+            UPLOAD
+            <input
+              type="file"
+              hidden
+              id="upload"
+              name="upload"
+              onChange={(e) => uploadImage(e)}
+            />
+          </Button>
+        </form>
+        <Button
+          onClick={() => {
+            chrome.tabs.create({ url: dashBoardUrl });
+          }}
+        >
+          {redirectId ? "DASHBOARD" : "Login"}
+        </Button>
+      </Stack>
     </Box>
   );
 };
